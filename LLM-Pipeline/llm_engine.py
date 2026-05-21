@@ -177,6 +177,21 @@ def analyze_data_view(repo_name, files_content_str):
     system_prompt = """
     너는 데이터베이스 아키텍트야. 제공된 Entity/Schema 파일들을 분석해서 ERD 데이터를 뽑아줘.
     테이블 이름, 컬럼 정보, 연관 관계를 분석해서 JSON 형태로 응답해.
+    반드시 다음 JSON 객체 형태로만 응답해.
+    {
+      "nodes": [
+        {
+          "id": "User",
+          "description": "사용자 테이블",
+          "columns": [
+            { "name": "id", "type": "Long", "is_pk": true, "is_fk": false }
+          ]
+        }
+      ],
+      "edges": [
+        { "source": "User", "target": "Order", "relation": "1:N" }
+      ]
+    }
     """
     
     response = client.models.generate_content(
