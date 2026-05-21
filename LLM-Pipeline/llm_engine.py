@@ -159,30 +159,71 @@ def analyze_interface_view(repo_name, files_content_str):
     }
     """
     
-    # 리스트를 문자열로 변환하여 프롬프트에 포함 (최대 파일 수가 너무 많으면 잘라낼 수도 있지만 지금은 통째로 보냄)
-    paths_str = "\n".join(file_paths)
-    user_prompt = f"다음 파일 경로들을 분류해줘:\n\n{paths_str}"
-    
-    print(f"🧠 [LLM] Gemini API를 호출하여 {len(file_paths)}개 파일 분류 중...")
-    
-    try:
-        response = client.models.generate_content(
-            model='gemini-3.1-flash-lite',
-            contents=user_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                temperature=0.1,
-                response_mime_type="application/json",
-            )
+    response = client.models.generate_content(
+        model='gemini-3.1-flash-lite',
+        contents=f"레포지토리: {repo_name}\n\n파일 내용들:\n{files_content_str}",
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.2,
+            response_mime_type="application/json"
         )
-        
-        result = json.loads(response.text)
-        return result
-    except Exception as e:
-        print(f"❌ [LLM] 분류 실패: {e}")
-        return {
-            "Interface": [],
-            "Functional": [],
-            "Data": [],
-            "Process": []
-        }
+    )
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError:
+        return {}
+
+def analyze_data_view(repo_name, files_content_str):
+    system_prompt = """
+    너는 데이터베이스 아키텍트야. 제공된 Entity/Schema 파일들을 분석해서 ERD 데이터를 뽑아줘.
+    테이블 이름, 컬럼 정보, 연관 관계를 분석해서 JSON 형태로 응답해.
+    """
+    
+    response = client.models.generate_content(
+        model='gemini-3.1-flash-lite',
+        contents=f"레포지토리: {repo_name}\n\n파일 내용들:\n{files_content_str}",
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.2,
+            response_mime_type="application/json"
+        )
+    )
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError:
+        return {"nodes": [], "edges": []}
+
+def analyze_process_view(repo_name, files_content_str):
+    system_prompt = """
+    너는 DevOps 엔지려야. CI/CD 파이프라인, Docker, 인프라 설정 파일들을 분석하여 파이프라인 흐름도를 그려줘.
+    빌드/테스트/배포 단계, 사용 기술 스택, 환경 변수를 추출해서 JSON으로 응답해.
+    반드시 다음 JSON 배열 형태로 응답해.
+    [
+      {
+        "step": "Build",
+        "description": "Gradle을 사용한 애플리케이션 빌드",
+        "tech_stack": ["Gradle", "Java 17"],
+        "env_vars": []
+      },
+      {
+        "step": "Deploy",
+        "description": "AWS EC2 배포",
+        "tech_stack": ["AWS", "Docker"],
+        "env_vars": ["AWS_ACCESS_KEY"]
+      }
+    ]
+    """
+    
+    response = client.models.generate_content(
+        model='gemini-3.1-flash-lite',
+        contents=f"레포지토리: {repo_name}\n\n파일 내용들:\n{files_content_str}",
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.2,
+            response_mime_type="application/json"
+        )
+    )
+    try:
+        return json.loads(response.text)
+    except json.JSONDecodeError:
+        return []
