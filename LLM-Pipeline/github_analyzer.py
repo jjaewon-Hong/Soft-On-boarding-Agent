@@ -59,30 +59,3 @@ def fetch_recent_commits(username, token, repo_name, limit=100):
     if response.status_code == 200:
         return response.json()
     return []
-
-import base64
-
-def fetch_file_contents(username, token, repo_name, file_paths, max_files=15):
-    """
-    분류된 파일들의 실제 내용을 GitHub API를 통해 가져옵니다.
-    LLM Context Window를 고려해 파일 수를 제한합니다.
-    """
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    
-    contents = []
-    # 중요한 파일 위주로 정렬하거나 그냥 앞부분 max_files개만 사용
-    for path in file_paths[:max_files]:
-        url = f"https://api.github.com/repos/{username}/{repo_name}/contents/{path}"
-        resp = requests.get(url, headers=headers)
-        if resp.status_code == 200:
-            data = resp.json()
-            if data.get('encoding') == 'base64':
-                try:
-                    decoded = base64.b64decode(data['content']).decode('utf-8')
-                    contents.append(f"--- FILE: {path} ---\n{decoded}\n")
-                except Exception:
-                    continue
-    return "\n".join(contents)
