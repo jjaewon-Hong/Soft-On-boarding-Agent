@@ -21,6 +21,9 @@ public class SchemaAnalysisResult {
     @Column(name = "space_id", nullable = false)
     private Long spaceId;
 
+    @Column(name = "file_path", nullable = false)
+    private String filePath;
+
     @Column(nullable = false)
     private String repositoryUrl;
 
@@ -33,8 +36,9 @@ public class SchemaAnalysisResult {
     private LocalDateTime analyzedAt;
 
     @Builder
-    public SchemaAnalysisResult(Long spaceId, String repositoryUrl, String commitHash, String analyzedJson) {
+    public SchemaAnalysisResult(Long spaceId, String filePath, String repositoryUrl, String commitHash, String analyzedJson) {
         this.spaceId = spaceId;
+        this.filePath = filePath;
         this.repositoryUrl = repositoryUrl;
         this.commitHash = commitHash;
         this.analyzedJson = analyzedJson;

@@ -13,6 +13,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { User, ShoppingCart, FileText, Database, Table as TableIcon } from 'lucide-react';
+import dagre from 'dagre';
 import { useAuthStore } from '../store/authStore';
 
 const iconMap: Record<string, any> = {
@@ -99,7 +100,43 @@ const CustomEdge = ({
   );
 };
 
+const getLayoutedElements = (nodes: any[], edges: any[]) => {
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  
+  // TB: Top to Bottom (수직 레이아웃), 노드와 랭크(계층) 간격 설정
+  dagreGraph.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 120, align: 'UL' });
 
+  nodes.forEach((node) => {
+    const width = 288; // w-72는 288px
+    const columnsCount = node.data?.columns?.length || 0;
+    const height = 70 + columnsCount * 32; // 헤더 영역 + 컬럼 행 높이 합산
+    dagreGraph.setNode(node.id, { width, height });
+  });
+
+  edges.forEach((edge) => {
+    dagreGraph.setEdge(edge.source, edge.target);
+  });
+
+  dagre.layout(dagreGraph);
+
+  const layoutedNodes = nodes.map((node) => {
+    const nodeWithPosition = dagreGraph.node(node.id);
+    const width = 288;
+    const columnsCount = node.data?.columns?.length || 0;
+    const height = 70 + columnsCount * 32;
+    
+    return {
+      ...node,
+      position: {
+        x: nodeWithPosition.x - width / 2,
+        y: nodeWithPosition.y - height / 2,
+      },
+    };
+  });
+
+  return { nodes: layoutedNodes, edges };
+};
 
 export function DataView() {
   const nodeTypes = useMemo(() => ({ tableNode: TableNode }), []);
@@ -128,11 +165,16 @@ export function DataView() {
         );
 
         if (response.data) {
-          if (response.data.nodes && response.data.nodes.length > 0) {
-            setNodes(response.data.nodes);
-          }
-          if (response.data.edges) {
-            setEdges(response.data.edges);
+          const rawNodes = response.data.nodes || [];
+          const rawEdges = response.data.edges || [];
+          
+          if (rawNodes.length > 0) {
+            const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(rawNodes, rawEdges);
+            setNodes(layoutedNodes);
+            setEdges(layoutedEdges);
+          } else {
+            setNodes([]);
+            setEdges([]);
           }
         }
       } catch (error) {
