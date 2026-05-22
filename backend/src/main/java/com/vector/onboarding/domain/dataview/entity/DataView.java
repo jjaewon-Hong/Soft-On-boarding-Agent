@@ -7,10 +7,16 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.util.Map;
+import java.time.LocalDateTime;
+
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 
 @Entity
-@Table(name = "\"Data\"")
+@Table(name = "\"data\"")
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DataView {
 
@@ -23,6 +29,15 @@ public class DataView {
 
     @Column(name = "repo_name")
     private String repoName;
+
+    @Column(name = "file_path")
+    private String filePath;
+
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "analyzed_json", columnDefinition = "jsonb")

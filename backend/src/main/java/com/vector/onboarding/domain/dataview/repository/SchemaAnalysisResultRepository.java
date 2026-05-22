@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface SchemaAnalysisResultRepository extends JpaRepository<SchemaAnalysisResult, Long> {
     Optional<SchemaAnalysisResult> findByRepositoryUrl(String repositoryUrl);
+    Optional<SchemaAnalysisResult> findBySpaceId(Long spaceId);
 }

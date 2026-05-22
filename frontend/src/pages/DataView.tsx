@@ -13,6 +13,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { User, ShoppingCart, FileText, Database, Table as TableIcon } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
 
 const iconMap: Record<string, any> = {
   User: User,
@@ -107,14 +108,24 @@ export function DataView() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+
   useEffect(() => {
     const fetchSchemaData = async () => {
+      if (!user?.spaceId || !token) return;
+
       try {
-        // 하드코딩된 임시 리포지토리 URL (.env.example에 있던 TOP250movie_douban으로 변경)
-        const repositoryUrl = "TOP250movie_douban";
         const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
-        const response = await axios.get(`${API_BASE}/api/v1/data-view/schema?repositoryUrl=${repositoryUrl}`);
+        const response = await axios.get(
+          `${API_BASE}/api/spaces/${user.spaceId}/data-view/schema`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
 
         if (response.data) {
           if (response.data.nodes && response.data.nodes.length > 0) {
@@ -130,7 +141,7 @@ export function DataView() {
     };
 
     fetchSchemaData();
-  }, []);
+  }, [user?.spaceId, token, setNodes, setEdges]);
 
   return (
     <div className="w-full h-full relative overflow-hidden flex">
