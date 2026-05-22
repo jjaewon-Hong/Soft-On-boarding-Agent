@@ -1,0 +1,59 @@
+FROM eclipse-temurin:17-jdk-jammy
+
+# Install Python 3 and pip
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy the LLM-Pipeline directory and install python requirements
+COPY LLM-Pipeline /app/LLM-Pipeline
+# Set up a virtual environment and install requirements
+RUN python3 -m venv /app/LLM-Pipeline/venv && \
+    /app/LLM-Pipeline/venv/bin/pip install --no-cache-dir -r /app/LLM-Pipeline/requirements.txt || echo "No requirements.txt found"
+
+# Make sure python uses the venv by default by placing it in PATH
+ENV PATH="/app/LLM-Pipeline/venv/bin:$PATH"
+
+# Copy the backend build artifact
+# Note: This assumes you run `./gradlew bootJar` on the host machine before running docker-compose,
+# OR we do a multi-stage build. Let's do a multi-stage build so it builds the JAR inside docker.
+
+# --- Build Stage ---
+FROM eclipse-temurin:17-jdk-jammy AS build
+WORKDIR /app/backend
+COPY backend/gradlew .
+COPY backend/gradle/ gradle/
+# Ensure gradlew has execute permissions
+RUN chmod +x gradlew
+COPY backend/build.gradle backend/settings.gradle ./
+# Copy backend source
+COPY backend/src src/
+RUN ./gradlew bootJar --no-daemon
+
+# --- Final Stage ---
+FROM eclipse-temurin:17-jdk-jammy
+# Install Python 3 and pip
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy python pipeline and install dependencies
+COPY LLM-Pipeline /app/LLM-Pipeline
+RUN python3 -m venv /app/LLM-Pipeline/venv && \
+    /app/LLM-Pipeline/venv/bin/pip install --no-cache-dir -r /app/LLM-Pipeline/requirements.txt || true
+ENV PATH="/app/LLM-Pipeline/venv/bin:$PATH"
+
+# Copy built JAR from build stage
+WORKDIR /app/backend
+COPY --from=build /app/backend/build/libs/*.jar app.jar
+
+# Expose backend port
+EXPOSE 8080
+
+# Run the backend
+ENTRYPOINT ["java", "-jar", "app.jar"]
