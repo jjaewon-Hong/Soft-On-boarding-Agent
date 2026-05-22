@@ -32,7 +32,16 @@ const ColorSwatch = ({ name, hex, borderClass = 'border-gray-200' }: { name: str
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(hex);
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(hex);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = hex;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try { document.execCommand('copy'); } catch (err) {}
+      document.body.removeChild(textArea);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -363,7 +372,19 @@ export function InterfaceView() {
                     <div className="w-full sm:w-1/2 p-4 bg-gray-50 border-t border-gray-100 sm:border-t-0 text-[10px] font-mono text-gray-600 overflow-x-auto min-h-[140px] flex items-start relative group">
                       <button 
                         className="absolute top-2 right-2 text-gray-500 hover:text-gray-900 bg-white hover:bg-gray-100 px-1.5 py-0.5 rounded-[4px] text-[9px] opacity-0 group-hover:opacity-100 transition-all border border-gray-200 shadow-sm"
-                        onClick={() => navigator.clipboard.writeText(comp.extraInfo || '')}
+                        onClick={() => {
+                          const text = comp.extraInfo || '';
+                          if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text);
+                          } else {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = text;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            try { document.execCommand('copy'); } catch (err) {}
+                            document.body.removeChild(textArea);
+                          }
+                        }}
                       >
                         Copy
                       </button>

@@ -32,7 +32,17 @@ export function SettingsView() {
 
   const handleCopyCode = () => {
     if (profile?.teamInfo?.teamCode) {
-      navigator.clipboard.writeText(profile.teamInfo.teamCode);
+      const code = profile.teamInfo.teamCode;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(code);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(textArea);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
