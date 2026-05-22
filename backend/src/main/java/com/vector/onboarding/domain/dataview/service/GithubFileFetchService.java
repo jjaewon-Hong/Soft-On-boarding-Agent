@@ -25,7 +25,12 @@ public class GithubFileFetchService {
             builder.defaultHeader("Authorization", "Bearer " + systemToken);
         }
         
+        org.springframework.web.reactive.function.client.ExchangeStrategies strategies = org.springframework.web.reactive.function.client.ExchangeStrategies.builder()
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
+                .build();
+
         this.webClient = builder
+                .exchangeStrategies(strategies)
                 .defaultHeader("Accept", "application/vnd.github.v3+json")
                 .build();
     }
