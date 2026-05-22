@@ -24,65 +24,6 @@ logger = logging.getLogger(__name__)
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def generate_onboarding_guide(repo_name, categorized_files, simulated_rag_context=""):
-    """
-    이 함수는 이제 기존 레포지토리 분석 결과를 무시하고, 
-    재원님의 프롬프트에 따라 Soft On-boarding Agent의 React 및 Spring Boot 뼈대 코드를 생성합니다.
-    """
-    
-    # 1. 시스템 프롬프트: 프론트엔드와 백엔드 역할을 동시에 부여
-    system_prompt = """
-    너는 B2B SaaS 전문 프론트엔드 개발자이자, Spring Boot 기반의 데이터 파이프라인을 구축하는 백엔드 아키텍트야.
-    현재 'Soft On-boarding Agent'의 프론트엔드(React/Vite)와 백엔드(Spring Boot) 핵심 로직을 구현해야 해.
-    """
-
-    # 2. 유저 프롬프트: 재원님이 작성하신 프롬프트 원본 + 약간의 디테일(버전, DB 등) 추가 적용
-    user_prompt = """
-    [Frontend 구현 요구사항]
-    현재 'Soft On-boarding Agent'의 [로그인 및 팀 스페이스 온보딩] 플로우를 React(Vite)와 Tailwind CSS를 사용해 구현하려고 해.
-    페이지 이동을 위해 `react-router-dom` v6를 사용하고, 아이콘은 `lucide-react`를 적용해 줘.
-    디자인은 Linear, Notion처럼 화이트/그레이 톤에 모던하고 여백이 많은 스타일로 깔끔하게 구성해 줘.
-
-    - 로그인 페이지 (LoginPage.tsx): 화면 중앙에 심플한 로고 텍스트와 함께 [Continue with GitHub] 버튼 하나만 크게 배치해 줘. (GitHub 아이콘 포함)
-    - 온보딩 라우팅 페이지 (OnboardingPage.tsx): 로그인 후 팀이 없는 유저가 보는 화면이야. 화면 중앙에 예쁜 카드 UI를 배치해 줘.
-      * 기본 상태 (팀 참여): '초대받은 팀 코드를 입력하세요'라는 문구와 함께 텍스트 Input, 그리고 [Join Space] 버튼을 만들어 줘.
-      * 하단 토글: 그 아래에 연한 글씨로 "새로운 팀 스페이스를 구축하고 싶으신가요? [팀 생성하기]" 버튼을 만들어 줘.
-    - 팀 생성 모달 또는 뷰 전환 (CreateTeamView): 위에서 [팀 생성하기]를 누르면 부드럽게 화면이 전환되며 입력창이 바뀌도록 해 줘. '분석할 GitHub 레포지토리 URL을 입력하세요' 문구와 Input, 그리고 [생성 및 분석 시작] 버튼을 만들어 줘.
-    - 분석 로딩 컴포넌트 (AnalyzingLoader.tsx): [생성 및 분석 시작] 버튼을 누르면 AI가 코드를 분석한다는 느낌을 주는 세련된 로딩 화면(스피너 또는 프로그레스 바)을 띄워 줘. "AI가 레포지토리 구조와 최근 커밋 히스토리를 분석하여 4-Way View를 구축하고 있습니다..." 라는 텍스트를 포함해 줘.
-
-    모든 상태 관리(팀 참여, 생성 전환 등)를 포함하여 작동 가능한 코드 뼈대로 작성해 줘.
-
-    ===SPLIT===
-
-    [Backend 구현 요구사항]
-    현재 'Soft On-boarding Agent'의 [GitHub OAuth 로그인 및 팀 스페이스 분석 생성] 핵심 비즈니스 로직을 구현해야 해.
-    Java 17 환경을 사용하고, 데이터베이스는 PostgreSQL 기준으로 Entity를 매핑해 줘.
-
-    - GitHub OAuth 2.0 로그인: spring-boot-starter-oauth2-client를 활용해 GitHub 로그인을 구현하고, 성공 시 발급받은 Access Token을 DB에 유저 정보와 함께 저장해 줘. (이 토큰으로 프라이빗 레포지토리 API를 호출해야 함).
-    - 팀 스페이스 참여 API (Join): 프론트에서 전달받은 teamCode를 검증하여 해당 팀에 유저를 매핑하는 엔드포인트를 만들어 줘.
-    - 팀 스페이스 생성 API (Create) - ⭐️ 핵심 ⭐️: 프론트에서 GitHub Repo URL을 받으면 다음 2가지 로직을 비동기(또는 효율적으로) 처리하는 서비스 레이어를 짜 줘.
-      * [로직 A: 뼈대 구축]: GitHub Git Trees API(recursive)를 호출해 파일 경로 목록을 가져온 뒤, LLM API(Google Gemini API 사용 기준)를 통해 이 파일들을 4가지 'Functional', 'Data', 'Interface', 'Process'로 분류해서 각각 테이블에 repo_name, file_path, space_id, created_at에 저장해 줘. 특히 space_id는 team code 문자열이 아닌 space id를 넣어줘야 해. LLM API 호출 부분은 서비스 레이어 뼈대만 작성해.
-      * [로직 B: 히스토리 매핑]: GitHub Commits API를 호출해 해당 레포의 '최근 100개' 커밋 내역과 Diff를 가져와. 그리고 이 커밋들이 수정/생성한 파일 경로를 바탕으로, [로직 A]에서 만든 컴포넌트 노드들과 매핑하여 CommitHistory 테이블에 저장해 줘. (프론트에서 특정 노드 클릭 시 이 히스토리가 조회되어야 함).
-
-    코드 구조는 Controller, Service, Repository(JPA) 패턴으로 깔끔하게 나누고, 외부 API(GitHub) 통신 부분은 WebClient 또는 RestTemplate을 사용하는 뼈대 코드로 작성해 줘.
-    
-    [중요 규칙]
-    반드시 Frontend 가이드 작성이 끝난 직후, Backend 가이드를 시작하기 전에 정확히 '===SPLIT===' 이라는 텍스트를 출력해서 두 파트를 완벽하게 구분해 줘. (이 기호를 기준으로 파이썬 시스템이 파일을 쪼갤 예정이야)
-    """
-
-    print("[LLM] 재원님의 커스텀 프롬프트를 바탕으로 React 및 Spring Boot 코드를 생성 중입니다...")
-    
-    response = client.models.generate_content(
-        model='gemini-3.1-flash-lite',
-        contents=user_prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.7,
-        )
-    )
-    
-    return response.text
-
 import json
 
 def categorize_files_with_gemini(file_paths):
@@ -101,6 +42,13 @@ def categorize_files_with_gemini(file_paths):
         if any(ignore in lower_path for ignore in ['.git/', 'node_modules/', 'venv/', '__pycache__', '.jpg', '.png', '.ico', '.svg', 'package-lock.json', 'yarn.lock']):
             continue
             
+        if lower_path.endswith('.json'):
+            if 'package.json' in lower_path:
+                categorized["Process"].append(path)
+            else:
+                categorized["Data"].append(path)
+            continue
+            
         if any(kw in lower_path for kw in ['components', 'pages', 'views', 'ui', 'styles', 'css', 'tailwind', '.jsx', '.tsx', 'router']):
             categorized["Interface"].append(path)
         elif any(kw in lower_path for kw in ['entity', 'schema', 'prisma', 'sql', 'ddl', 'models', 'migrations']):
@@ -112,50 +60,204 @@ def categorize_files_with_gemini(file_paths):
             
     return categorized
 
-def analyze_functional_view(repo_name, files_content_str):
+def extract_domain_from_path(file_path: str) -> str:
+    """
+    경로 기반으로 언어/프레임워크 무관하게 확정적(Deterministic)인 도메인 명을 추출합니다.
+    """
+    if not file_path:
+        return "Core Domain"
+        
+    ignored_folders = {
+        'src', 'main', 'java', 'com', 'net', 'org', 'app', 'lib', 'pkg', 
+        'internal', 'components', 'pages', 'services', 'controllers', 'views', 
+        'utils', 'api', 'domain', 'routes', 'hooks', 'store', 'tests', 'test', 'spec', 'bin',
+        'dto', 'entity', 'repository', 'controller', 'model', 'exception', 'config'
+    }
+    
+    # 1. 파일의 부모 디렉토리 경로 추출
+    dir_path = os.path.dirname(file_path)
+    if not dir_path:
+        # 루트 디렉토리의 파일인 경우
+        return "Core Domain"
+        
+    parts = dir_path.split('/')
+    
+    # 2. 의미 없는 아키텍처 폴더 필터링
+    filtered_parts = [p for p in parts if p and p.lower() not in ignored_folders]
+    
+    # 3. 마지막(핵심) 폴더명을 도메인 이름으로 지정
+    if filtered_parts:
+        last_part = filtered_parts[-1]
+        # Kebab/Snake case를 공백으로 변환하고 대문자화 (예: user-auth -> User Auth)
+        formatted_name = last_part.replace('-', ' ').replace('_', ' ').title()
+        return f"{formatted_name} Domain"
+        
+    # 필터링 후 남은게 없다면 (예: src/components 직하위) 
+    # 원래 parts의 마지막 유효한 디렉토리 이름 사용 (components 자체)
+    last_valid = [p for p in parts if p]
+    if last_valid:
+        formatted_name = last_valid[-1].replace('-', ' ').replace('_', ' ').title()
+        return f"{formatted_name} Domain"
+        
+    return "Core Domain"
+
+def call_gemini_with_retry(model_name: str, contents: str, config: types.GenerateContentConfig, view_name: str):
+    """Gemini API 호출 시 Rate Limit(429) 등 오류 발생 시 스마트 재시도를 수행하는 헬퍼 함수"""
+    import time
+    import re
+    
+    def _get_retry_delay(err_str, default=60):
+        m = re.search(r'Please retry in (\d+\.?\d*)s', err_str)
+        return float(m.group(1)) + 1.0 if m else default
+
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            return client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config
+            )
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "Quota" in err_str:
+                if attempt < max_retries - 1:
+                    wait_time = _get_retry_delay(err_str, 60)
+                    logger.warning(f"[{view_name}] 429 Rate Limit 초과. {wait_time:.1f}초 대기 후 재시도... ({attempt+1}/{max_retries})")
+                    time.sleep(wait_time)
+                    continue
+            logger.error(f"[{view_name}] LLM 분석 중 예외 발생: {e}")
+            return None
+    return None
+
+def analyze_functional_view(repo_name, files_content_dict):
     system_prompt = """
-    너는 시니어 백엔드 아키텍트야. 제공된 소스코드 파일들을 분석해서 비즈니스 로직과 서비스 계층이 어떻게 구성되어 있는지 분석해줘.
-    FOREST (도메인 분류), TREE (클래스/파일 단위), RING (핵심 메서드/API) 계층 구조로 나누어 JSON으로 응답해.
-    반드시 다음 JSON 배열 형태로만 응답해.
+    너는 시니어 백엔드 아키텍트야. 주어진 여러 소스코드 파일들을 분석해.
+    
+    [핵심 지시사항]
+    파일 내용들을 바탕으로 분석 결과를 아래와 같은 JSON 배열 형태로 반환해. 반드시 다음 형태를 지켜야 해:
     [
       {
-        "name": "User Domain (Forest 예시)",
-        "element_type": "FOREST",
-        "description": "유저 관련 비즈니스 도메인",
-        "children": [
+        "file_path": "분석한 파일의 경로",
+        "trees": [
           {
-            "name": "UserService.java",
-            "element_type": "TREE",
-            "description": "유저 비즈니스 로직 클래스",
-            "file_path": "src/main/java/.../UserService.java",
-            "children": [
+            "name": "클래스명 또는 주요 구조체명",
+            "description": "이 클래스/구조체의 역할 설명",
+            "rings": [
               {
-                "name": "login()",
-                "element_type": "RING",
-                "description": "유저 로그인 처리 메서드",
-                "api_method": "POST",
-                "api_url": "/api/v1/login"
+                "name": "메서드명 또는 함수명",
+                "description": "이 메서드/함수의 역할",
+                "api_method": "HTTP 메서드 (예: GET, POST 등. 없으면 null)",
+                "api_url": "API 엔드포인트 경로 (없으면 null)"
               }
             ]
           }
         ]
       }
     ]
+
+    [필터링 지시사항 (매우 중요)]
+    신규 입사자의 인지 과부하를 막기 위해, 모든 메서드를 다 뽑지 말고 핵심만 엄선해.
+    1. **추출 대상**: [외부와 통신하는 API 엔드포인트]와 [핵심 비즈니스 로직을 담당하는 Public 메서드] 등, 이 클래스/파일에서 가장 중요한 역할(진입점)을 하는 핵심 요소만 `rings`로 반환해.
+    2. **제외 대상 (절대 추출 금지)**: 단순 유틸리티 함수, 데이터 파싱용 헬퍼 메서드, Private 메서드, Getter/Setter 등은 절대 추출하지 마.
+
+    [중요 예외 처리]
+    만약 파일에 명시적인 클래스 선언이 없고 함수만 존재하는 경우(예: 파이썬 스크립트, React 컴포넌트, 유틸리티 등), 
+    **파일 이름 자체나 모듈 역할**을 하나의 `tree`로 만들고, 파일 내의 핵심 함수들을 해당 `tree`의 `rings` 배열 안에 넣어.
     """
     
-    response = client.models.generate_content(
-        model='gemini-3.1-flash-lite',
-        contents=f"레포지토리: {repo_name}\n\n파일 내용들:\n{files_content_str}",
+    # 1. 단일 텍스트로 병합
+    combined_content = ""
+    for file_path, content in files_content_dict.items():
+        combined_content += f"\n\n--- FILE: {file_path} ---\n{content}"
+        
+    response = call_gemini_with_retry(
+        model_name='gemini-3.5-flash',
+        contents=f"레포지토리: {repo_name}\n\n파일 내용 모음:{combined_content}",
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.2,
             response_mime_type="application/json"
-        )
+        ),
+        view_name="Functional View"
     )
-    try:
-        return json.loads(response.text)
-    except json.JSONDecodeError:
+    
+    if not response:
         return []
+        
+    raw_text = response.text
+    cleaned_text = re.sub(r'^```(json)?|```$', '', raw_text.strip(), flags=re.MULTILINE).strip()
+    try:
+        results = json.loads(cleaned_text)
+    except Exception as e:
+        logger.error(f"[Functional View] JSON 파싱 실패: {e}")
+        return []
+        
+    if not isinstance(results, list):
+        results = [results]
+        
+    # 조립 파트
+    final_nodes = []
+    forest_map = {} # domain_name -> temp_id
+    temp_id_counter = 1
+    
+    for file_res in results:
+        if not file_res or not isinstance(file_res, dict):
+            continue
+            
+        file_path = file_res.get("file_path", "")
+        # 경로 기반으로 확정적(Deterministic) 도메인 이름 생성
+        domain_name = extract_domain_from_path(file_path)
+            
+        if domain_name not in forest_map:
+            forest_map[domain_name] = str(temp_id_counter)
+            final_nodes.append({
+                "temp_id": str(temp_id_counter),
+                "parent_temp_id": None,
+                "name": domain_name,
+                "element_type": "FOREST",
+                "description": f"{domain_name} 비즈니스 영역",
+                "file_path": None,
+                "api_method": None,
+                "api_url": None
+            })
+            temp_id_counter += 1
+            
+        forest_id = forest_map[domain_name]
+        
+        trees = file_res.get("trees", [])
+        for tree in trees:
+            tree_id = str(temp_id_counter)
+            temp_id_counter += 1
+            
+            final_nodes.append({
+                "temp_id": tree_id,
+                "parent_temp_id": forest_id,
+                "name": tree.get("name", "Unknown"),
+                "element_type": "TREE",
+                "description": tree.get("description", ""),
+                "file_path": file_path,
+                "api_method": None,
+                "api_url": None
+            })
+            
+            rings = tree.get("rings", [])
+            for ring in rings:
+                ring_id = str(temp_id_counter)
+                temp_id_counter += 1
+                
+                final_nodes.append({
+                    "temp_id": ring_id,
+                    "parent_temp_id": tree_id,
+                    "name": ring.get("name", "Unknown"),
+                    "element_type": "RING",
+                    "description": ring.get("description", ""),
+                    "file_path": file_path,
+                    "api_method": ring.get("api_method"),
+                    "api_url": ring.get("api_url")
+                })
+                
+    return final_nodes
 
 def analyze_interface_view(repo_name, files_content_str):
     """
@@ -163,27 +265,55 @@ def analyze_interface_view(repo_name, files_content_str):
     """
     system_prompt = """
     너는 시니어 프론트엔드 개발자야. 제공된 프론트엔드/UI 파일들을 분석하여 라우팅 트리, 디자인 토큰, UI 컴포넌트 목록을 분석해줘.
-    반드시 다음 JSON 객체 형태로만 응답해.
-    {
-      "routing": [ {"path": "/", "component": "Home"} ],
-      "design_tokens": { "colors": ["#fff"], "fonts": ["Inter"] },
-      "components": [ {"name": "Button", "description": "공통 버튼 컴포넌트"} ]
-    }
+    중요: 하나의 레포지토리에 있는 모든 데이터를 생략되는 것 없이 최대한 많이 추출해서 응답해야 해.
+    반드시 다음 JSON 배열 형태로만 응답해. 각 객체는 다음 열로만 구성되어야 해:
+    repo_name, file_path, space_id, created_at, element_type, name, description, extra_info
+
+    - element_type: "ROUTING", "DESIGN_TOKEN", "COMPONENT" 중 하나로 분류
+    - extra_info: 해당 요소와 관련된 추가 정보 (라우팅 경로, 컴포넌트 Props, 색상 코드 등)
+
+    [
+      {
+        "repo_name": "레포지토리 이름",
+        "file_path": "해당 파일 경로",
+        "space_id": null,
+        "created_at": "현재 시간(ISO 8601)",
+        "element_type": "ROUTING",
+        "name": "Login",
+        "description": "사용자 로그인 페이지 컴포넌트",
+        "extra_info": "경로: /login"
+      },
+      {
+        "repo_name": "레포지토리 이름",
+        "file_path": "해당 파일 경로",
+        "space_id": null,
+        "created_at": "현재 시간(ISO 8601)",
+        "element_type": "COMPONENT",
+        "name": "Button",
+        "description": "재사용 가능한 UI 버튼",
+        "extra_info": "Props: size, color, onClick"
+      }
+    ]
     """
     
-    response = client.models.generate_content(
-        model='gemini-3.1-flash-lite',
+    response = call_gemini_with_retry(
+        model_name='gemini-3.5-flash',
         contents=f"레포지토리: {repo_name}\n\n파일 내용들:\n{files_content_str}",
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
             temperature=0.2,
             response_mime_type="application/json"
-        )
+        ),
+        view_name="Interface View"
     )
+    
+    if not response:
+        return []
+        
     try:
         return json.loads(response.text)
     except json.JSONDecodeError:
-        return {}
+        return []
 
 # ============================================================
 # Interface Analysis Pipeline (interface_analyzer.py 통합)
@@ -381,39 +511,47 @@ def run_interface_analysis_pipeline(space_id: int, project_path: str):
         logger.error(f"파이프라인 실행 중 치명적 오류 발생: {str(e)}")
         raise
 
-def analyze_data_view(repo_name, files_content_str):
+def analyze_data_view(repo_name: str, file_paths: list) -> list:
     """
-    Data View용 파일 목록을 텍스트 형태로 반환합니다.
-    LLM JSON 분석 없이, 파일 내용 문자열에서 파일명을 추출하여 줄바꿈으로 나열합니다.
-    호출 측(SOA_LLM_Model.py)에서 repo_name, space_id와 함께 DB에 적재합니다.
+    Data View용 파일 경로 리스트를 받아, Data의 열 구조에 맞게 반환합니다.
+    LLM 분석 없이 파일 경로를 기반으로 목록을 생성합니다.
     """
-    file_names = []
-    for line in files_content_str.split("\n"):
-        line = line.strip()
-        if line.startswith("--- FILE:") and line.endswith("---"):
-            # "--- FILE: path/to/file.java ---" 형식에서 파일 경로 추출
-            file_path = line.replace("--- FILE:", "").replace("---", "").strip()
-            file_names.append(file_path)
+    import datetime
+    now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
     
-    return "\n".join(file_names)
+    results = []
+    for path in file_paths:
+        results.append({
+            "repo_name": repo_name,
+            "file_path": path,
+            "file_name": os.path.basename(path),
+            "space_id": None,
+            "created_at": now_str
+        })
+
+    logger.info(f"[Data View] '{repo_name}' 파일 변환 완료: 총 {len(results)}건")
+    return results
 
 def analyze_process_view(repo_name, files_content_str):
     system_prompt = """
-    너는 DevOps 엔지려야. CI/CD 파이프라인, Docker, 인프라 설정 파일들을 분석하여 파이프라인 흐름도를 그려줘.
-    빌드/테스트/배포 단계, 사용 기술 스택, 환경 변수를 추출해서 JSON으로 응답해.
-    반드시 다음 JSON 배열 형태로 응답해.
+    너는 DevOps 엔지니어야. CI/CD 파이프라인, Docker, 인프라 설정 파일들을 분석하여 파이프라인 흐름도를 그려줘.
+    중요: 하나의 레포지토리에 있는 모든 데이터를 생략되는 것 없이 최대한 많이 추출해서 응답해야 해.
+    반드시 다음 JSON 배열 형태로 응답해. 각 객체는 다음 열로만 구성되어야 해:
+    repo_name, file_path, space_id, created_at, element_type, name, description, tech_stack, env_vars
+
+    - element_type: "STEP" 으로 고정 (각 파이프라인 단계를 의미함)
+
     [
       {
-        "step": "Build",
-        "description": "Gradle을 사용한 애플리케이션 빌드",
-        "tech_stack": ["Gradle", "Java 17"],
-        "env_vars": []
-      },
-      {
-        "step": "Deploy",
-        "description": "AWS EC2 배포",
-        "tech_stack": ["AWS", "Docker"],
-        "env_vars": ["AWS_ACCESS_KEY"]
+        "repo_name": "레포지토리 이름",
+        "file_path": "해당 파일 경로",
+        "space_id": null,
+        "created_at": "현재 시간(ISO 8601)",
+        "element_type": "STEP",
+        "name": "Build Project",
+        "description": "프로젝트 빌드 단계",
+        "tech_stack": "Gradle, Java 17",
+        "env_vars": "None"
       }
     ]
     """
