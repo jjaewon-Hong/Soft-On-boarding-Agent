@@ -315,7 +315,7 @@ export function DataView() {
           <MiniMap 
             zoomable
             pannable
-            nodeColor={(node) => '#9CA3AF'}
+            nodeColor={() => '#9CA3AF'}
             maskColor="rgba(250, 250, 250, 0.6)"
             className="rounded-xl border border-gray-200 overflow-hidden shadow-sm"
           />
