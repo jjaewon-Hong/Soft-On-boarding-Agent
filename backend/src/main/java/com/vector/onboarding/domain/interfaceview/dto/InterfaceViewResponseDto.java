@@ -1,6 +1,6 @@
-package com.vector.onboarding.domain.dataview.dto;
+package com.vector.onboarding.domain.interfaceview.dto;
 
-import com.vector.onboarding.domain.dataview.entity.InterfaceView;
+import com.vector.onboarding.domain.interfaceview.entity.InterfaceView;
 import lombok.Builder;
 import lombok.Getter;
 

@@ -1,6 +1,6 @@
-package com.vector.onboarding.domain.dataview.repository;
+package com.vector.onboarding.domain.processflow.repository;
 
-import com.vector.onboarding.domain.dataview.entity.CommitHistory;
+import com.vector.onboarding.domain.processflow.entity.CommitHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

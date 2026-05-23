@@ -1,6 +1,6 @@
-package com.vector.onboarding.domain.dataview.repository;
+package com.vector.onboarding.domain.interfaceview.repository;
 
-import com.vector.onboarding.domain.dataview.entity.ComponentNode;
+import com.vector.onboarding.domain.interfaceview.entity.ComponentNode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

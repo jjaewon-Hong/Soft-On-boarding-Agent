@@ -1,7 +1,7 @@
-package com.vector.onboarding.domain.dataview;
+package com.vector.onboarding.domain.interfaceview;
 
-import com.vector.onboarding.domain.dataview.dto.CommitHistoryResponseDto;
-import com.vector.onboarding.domain.dataview.service.CommitHistoryService;
+import com.vector.onboarding.domain.interfaceview.dto.InterfaceViewResponseDto;
+import com.vector.onboarding.domain.interfaceview.service.InterfaceViewService;
 import com.vector.onboarding.domain.space.SpaceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,22 +15,22 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/spaces/{spaceId}/commit-history")
+@RequestMapping("/api/spaces/{spaceId}/interface-view")
 @RequiredArgsConstructor
-public class CommitHistoryController {
+public class InterfaceViewController {
 
-    private final CommitHistoryService commitHistoryService;
+    private final InterfaceViewService interfaceViewService;
     private final SpaceService spaceService;
 
     @GetMapping
-    public ResponseEntity<List<CommitHistoryResponseDto>> getCommitHistory(
+    public ResponseEntity<List<InterfaceViewResponseDto>> getInterfaceView(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long spaceId) {
 
         Long requestUserId = Long.valueOf(userDetails.getUsername());
         spaceService.checkSpaceMembership(requestUserId, spaceId);
 
-        List<CommitHistoryResponseDto> response = commitHistoryService.getCommitHistoryBySpaceId(spaceId);
+        List<InterfaceViewResponseDto> response = interfaceViewService.getInterfaceViewBySpaceId(spaceId);
         return ResponseEntity.ok(response);
     }
 }

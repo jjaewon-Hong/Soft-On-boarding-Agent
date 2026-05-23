@@ -1,4 +1,4 @@
-package com.vector.onboarding.domain.dataview.entity;
+package com.vector.onboarding.domain.processflow.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

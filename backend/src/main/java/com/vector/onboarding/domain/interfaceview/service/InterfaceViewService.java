@@ -1,7 +1,7 @@
-package com.vector.onboarding.domain.dataview.service;
+package com.vector.onboarding.domain.interfaceview.service;
 
-import com.vector.onboarding.domain.dataview.dto.InterfaceViewResponseDto;
-import com.vector.onboarding.domain.dataview.repository.InterfaceViewRepository;
+import com.vector.onboarding.domain.interfaceview.dto.InterfaceViewResponseDto;
+import com.vector.onboarding.domain.interfaceview.repository.InterfaceViewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

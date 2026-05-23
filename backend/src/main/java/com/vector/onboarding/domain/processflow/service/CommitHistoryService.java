@@ -1,7 +1,7 @@
-package com.vector.onboarding.domain.dataview.service;
+package com.vector.onboarding.domain.processflow.service;
 
-import com.vector.onboarding.domain.dataview.dto.CommitHistoryResponseDto;
-import com.vector.onboarding.domain.dataview.repository.CommitHistoryRepository;
+import com.vector.onboarding.domain.processflow.dto.CommitHistoryResponseDto;
+import com.vector.onboarding.domain.processflow.repository.CommitHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

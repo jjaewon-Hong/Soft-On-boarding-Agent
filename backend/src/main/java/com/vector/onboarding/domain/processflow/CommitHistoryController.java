@@ -1,7 +1,7 @@
-package com.vector.onboarding.domain.dataview;
+package com.vector.onboarding.domain.processflow;
 
-import com.vector.onboarding.domain.dataview.dto.InterfaceViewResponseDto;
-import com.vector.onboarding.domain.dataview.service.InterfaceViewService;
+import com.vector.onboarding.domain.processflow.dto.CommitHistoryResponseDto;
+import com.vector.onboarding.domain.processflow.service.CommitHistoryService;
 import com.vector.onboarding.domain.space.SpaceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,22 +15,22 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/spaces/{spaceId}/interface-view")
+@RequestMapping("/api/spaces/{spaceId}/commit-history")
 @RequiredArgsConstructor
-public class InterfaceViewController {
+public class CommitHistoryController {
 
-    private final InterfaceViewService interfaceViewService;
+    private final CommitHistoryService commitHistoryService;
     private final SpaceService spaceService;
 
     @GetMapping
-    public ResponseEntity<List<InterfaceViewResponseDto>> getInterfaceView(
+    public ResponseEntity<List<CommitHistoryResponseDto>> getCommitHistory(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long spaceId) {
 
         Long requestUserId = Long.valueOf(userDetails.getUsername());
         spaceService.checkSpaceMembership(requestUserId, spaceId);
 
-        List<InterfaceViewResponseDto> response = interfaceViewService.getInterfaceViewBySpaceId(spaceId);
+        List<CommitHistoryResponseDto> response = commitHistoryService.getCommitHistoryBySpaceId(spaceId);
         return ResponseEntity.ok(response);
     }
 }

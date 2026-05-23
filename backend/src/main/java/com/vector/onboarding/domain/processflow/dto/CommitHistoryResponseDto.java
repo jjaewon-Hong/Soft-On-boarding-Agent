@@ -1,6 +1,6 @@
-package com.vector.onboarding.domain.dataview.dto;
+package com.vector.onboarding.domain.processflow.dto;
 
-import com.vector.onboarding.domain.dataview.entity.CommitHistory;
+import com.vector.onboarding.domain.processflow.entity.CommitHistory;
 import lombok.Builder;
 import lombok.Getter;
 
