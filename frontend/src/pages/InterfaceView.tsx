@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Folder, FileCode2, Palette, Box, Search,
-  ChevronDown, ChevronRight, BookOpen
+  ChevronDown, ChevronRight, BookOpen, Type
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { interfaceApi } from '../services/interfaceApi';
@@ -313,8 +313,12 @@ export function InterfaceView() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-[10px] text-gray-400 bg-white border border-dashed border-gray-200 p-3 rounded text-center">
-                    No color tokens found in DB.
+                  <div className="flex flex-col items-center justify-center p-6 bg-white border border-dashed border-gray-200 rounded-[6px] text-center gap-2">
+                    <div className="p-2 bg-gray-50 rounded-full">
+                      <Palette className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="text-[11px] font-medium text-gray-600">No Color Tokens</div>
+                    <div className="text-[10px] text-gray-400 max-w-[200px]">Design tokens for colors have not been extracted or saved in the database yet.</div>
                   </div>
                 )}
               </div>
@@ -343,8 +347,12 @@ export function InterfaceView() {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-[10px] text-gray-400 bg-white border border-dashed border-gray-200 p-3 rounded text-center">
-                    No typography tokens found in DB.
+                  <div className="flex flex-col items-center justify-center p-6 bg-white border border-dashed border-gray-200 rounded-[6px] text-center gap-2">
+                    <div className="p-2 bg-gray-50 rounded-full">
+                      <Type className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="text-[11px] font-medium text-gray-600">No Typography Tokens</div>
+                    <div className="text-[10px] text-gray-400 max-w-[200px]">Design tokens for typography have not been extracted or saved in the database yet.</div>
                   </div>
                 )}
               </div>
