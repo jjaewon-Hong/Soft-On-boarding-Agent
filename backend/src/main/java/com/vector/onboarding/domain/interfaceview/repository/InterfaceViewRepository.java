@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface InterfaceViewRepository extends JpaRepository<InterfaceView, Long> {
-    List<InterfaceView> findAllBySpaceId(Long spaceId);
+    List<InterfaceView> findAllBySpaceIdOrderByNameAsc(Long spaceId);
 }

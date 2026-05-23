@@ -109,8 +109,19 @@ export function InterfaceView() {
   });
 
   const renderTree = (node: any, path: string = '', level: number = 0) => {
-    return Object.entries(node).map(([key, value]: [string, any]) => {
-      if (key === '_isFile') return null;
+    const entries = Object.entries(node).filter(([key]) => key !== '_isFile');
+    
+    // Sort: Folders first, then files. Alphabetical within groups.
+    entries.sort(([keyA, valA], [keyB, valB]) => {
+      const isFileA = !!(valA as any)._isFile;
+      const isFileB = !!(valB as any)._isFile;
+      if (isFileA === isFileB) {
+        return keyA.localeCompare(keyB);
+      }
+      return isFileA ? 1 : -1; // folders first
+    });
+
+    return entries.map(([key, value]: [string, any]) => {
       
       const currentPath = path ? `${path}/${key}` : key;
       const isFile = value._isFile;

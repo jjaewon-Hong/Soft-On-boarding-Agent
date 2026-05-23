@@ -17,7 +17,7 @@ public class InterfaceViewService {
     private final InterfaceViewRepository interfaceViewRepository;
 
     public List<InterfaceViewResponseDto> getInterfaceViewBySpaceId(Long spaceId) {
-        return interfaceViewRepository.findAllBySpaceId(spaceId).stream()
+        return interfaceViewRepository.findAllBySpaceIdOrderByNameAsc(spaceId).stream()
                 .map(InterfaceViewResponseDto::from)
                 .collect(Collectors.toList());
     }
