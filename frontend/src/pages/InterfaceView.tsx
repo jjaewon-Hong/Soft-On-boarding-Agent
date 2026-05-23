@@ -317,8 +317,8 @@ export function InterfaceView() {
                     <div className="p-2 bg-gray-50 rounded-full">
                       <Palette className="w-4 h-4 text-gray-400" />
                     </div>
-                    <div className="text-[11px] font-medium text-gray-600">No Color Tokens</div>
-                    <div className="text-[10px] text-gray-400 max-w-[200px]">Design tokens for colors have not been extracted or saved in the database yet.</div>
+                    <div className="text-[11px] font-medium text-gray-600">컬러 토큰 없음</div>
+                    <div className="text-[10px] text-gray-400 max-w-[200px]">아직 추출되거나 DB에 저장된 색상 토큰 데이터가 없습니다.</div>
                   </div>
                 )}
               </div>
@@ -351,8 +351,8 @@ export function InterfaceView() {
                     <div className="p-2 bg-gray-50 rounded-full">
                       <Type className="w-4 h-4 text-gray-400" />
                     </div>
-                    <div className="text-[11px] font-medium text-gray-600">No Typography Tokens</div>
-                    <div className="text-[10px] text-gray-400 max-w-[200px]">Design tokens for typography have not been extracted or saved in the database yet.</div>
+                    <div className="text-[11px] font-medium text-gray-600">타이포그래피 토큰 없음</div>
+                    <div className="text-[10px] text-gray-400 max-w-[200px]">아직 추출되거나 DB에 저장된 타이포그래피 토큰 데이터가 없습니다.</div>
                   </div>
                 )}
               </div>
