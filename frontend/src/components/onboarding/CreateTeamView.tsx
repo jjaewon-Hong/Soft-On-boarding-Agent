@@ -135,7 +135,7 @@ export function CreateTeamView({ onViewChange }: CreateTeamViewProps) {
           <span>{isLoading ? '생성 중...' : '생성 및 분석 시작'}</span>
         </button>
         <p className="text-center text-[11px] text-gray-500 font-medium">
-          💡 첫 생성 시 AI가 전체 레포지토리를 분석하므로 약 <span className="text-gray-700 font-bold">5~10분</span>의 시간이 소요됩니다.
+          💡 첫 생성 시 AI가 전체 레포지토리를 분석하므로 프로젝트 크기에 따라 약 <span className="text-gray-700 font-bold">5~10분</span> 정도 소요될 수 있습니다.
         </p>
       </div>
     </div>
