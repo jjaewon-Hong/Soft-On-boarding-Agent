@@ -57,6 +57,28 @@ function App() {
         console.warn('Silent token validation failed.');
       });
     }
+
+    // 1. BFCache (Back-Forward Cache) 무효화
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload(); // 뒤로가기 시 강제 새로고침
+      }
+    };
+
+    // 2. 다른 탭간 로그아웃(스토리지 비워짐) 상태 동기화
+    const syncAuthState = (e: StorageEvent) => {
+      if (e.key === 'auth-storage') {
+        useAuthStore.persist.rehydrate();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('storage', syncAuthState);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('storage', syncAuthState);
+    };
   }, [isAuthenticated]);
 
   return (
